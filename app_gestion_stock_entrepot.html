@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SIAG Entrepôt — Gestion de stock pédagogique</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --soft: #1f2937;
+      --muted: #94a3b8;
+      --text: #e5e7eb;
+      --accent: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --info: #38bdf8;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(180deg, #0b1020, #111827);
+      color: var(--text);
+    }
+    header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.95);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    h1, h2, h3 { margin: 0 0 10px; }
+    p { color: var(--muted); }
+    .subtitle { margin-top: 6px; color: #cbd5e1; }
+    .container { padding: 18px; max-width: 1600px; margin: auto; }
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 16px 0 18px;
+    }
+    .tab-btn {
+      background: #172033;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .tab-btn.active { background: #1e293b; outline: 2px solid var(--info); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(12, 1fr);
+    }
+    .card {
+      background: rgba(17, 24, 39, 0.95);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+    }
+    .span-12 { grid-column: span 12; }
+    .span-8 { grid-column: span 8; }
+    .span-7 { grid-column: span 7; }
+    .span-6 { grid-column: span 6; }
+    .span-5 { grid-column: span 5; }
+    .span-4 { grid-column: span 4; }
+    .span-3 { grid-column: span 3; }
+    @media (max-width: 1100px) {
+      .span-8, .span-7, .span-6, .span-5, .span-4, .span-3 { grid-column: span 12; }
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      color: #cbd5e1;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+    input, select, textarea, button {
+      font-family: inherit;
+      font-size: 14px;
+    }
+    input, select, textarea {
+      width: 100%;
+      background: #0b1220;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+    }
+    textarea { min-height: 90px; resize: vertical; }
+    button {
+      background: #1d4ed8;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+    button.secondary { background: #475569; }
+    button.warn { background: #b45309; }
+    button.danger { background: #b91c1c; }
+    button.success { background: #15803d; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      overflow: hidden;
+      border-radius: 10px;
+    }
+    th, td {
+      border-bottom: 1px solid #263245;
+      padding: 10px 8px;
+      text-align: left;
+      vertical-align: top;
+      font-size: 13px;
+    }
+    th { background: #172033; }
+    tr:hover td { background: rgba(30, 41, 59, 0.45); }
+    .pill {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .ok { background: rgba(34,197,94,0.15); color: #86efac; }
+    .warn-pill { background: rgba(245,158,11,0.15); color: #fcd34d; }
+    .danger-pill { background: rgba(239,68,68,0.15); color: #fca5a5; }
+    .info-pill { background: rgba(56,189,248,0.15); color: #7dd3fc; }
+    .kpi-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(4, 1fr);
+    }
+    @media (max-width: 1000px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px) { .kpi-grid { grid-template-columns: 1fr; } }
+    .kpi {
+      background: #0b1220;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .kpi .label { color: var(--muted); font-size: 12px; }
+    .kpi .value { font-size: 28px; font-weight: bold; margin-top: 8px; }
+    .small { font-size: 12px; color: var(--muted); }
+    .flex { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .split { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .gauge {
+      height: 20px;
+      background: #0b1220;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      margin: 8px 0 4px;
+    }
+    .gauge > div {
+      height: 100%;
+      background: linear-gradient(90deg, #38bdf8, #22c55e);
+      width: 0%;
+    }
+    .uml-box {
+      display: grid;
+      grid-template-columns: 170px 1fr 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .lane-head, .uml-cell {
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #0b1220;
+      min-height: 64px;
+    }
+    .lane-head {
+      background: #172033;
+      font-weight: bold;
+    }
+    .rule {
+      background: #0b1220;
+      border-left: 4px solid #38bdf8;
+      padding: 10px 12px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-family: Consolas, monospace;
+      font-size: 13px;
+    }
+    .footer-note {
+      margin-top: 16px;
+      color: #94a3b8;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>SIAG Entrepôt — Gestion de stock appliquée par IA</h1>
+    <div class="subtitle">Application web pédagogique en HTML, CSS et JavaScript — Exercices 1, 2 et 3</div>
+  </header>
+
+  <div class="container">
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="articles">Articles & Messages</button>
+      <button class="tab-btn" data-tab="processus">Processus BNMP / UML</button>
+      <button class="tab-btn" data-tab="kpi">KPI & Dashboard</button>
+      <button class="tab-btn" data-tab="trs">TRS</button>
+      <button class="tab-btn" data-tab="abc">ABC / EOQ</button>
+      <button class="tab-btn" data-tab="suppliers">Fournisseurs</button>
+      <button class="tab-btn" data-tab="po">PO & Automatisation</button>
+      <button class="tab-btn" data-tab="audit">Audit / UAT</button>
+    </div>
+
+    <section id="articles" class="tab-content active">
+      <div class="grid">
+        <div class="card span-4">
+          <h2>Ajouter / modifier un article</h2>
+          <label>SKU</label>
+          <input id="sku" placeholder="Ex. SKU-1001" />
+          <label>Description</label>
+          <input id="description" placeholder="Ex. Roulement industriel" />
+          <label>Stock physique</label>
+          <input id="stock_physique" type="number" value="0" />
+          <label>Transit</label>
+          <input id="transit" type="number" value="0" />
+          <label>Réservé</label>
+          <input id="reserve" type="number" value="0" />
+          <label>Seuil minimum</label>
+          <input id="seuil_min" type="number" value="0" />
+          <label>Marge suggérée</label>
+          <input id="marge" type="number" value="5" />
+          <label>Consommation journalière</label>
+          <input id="conso_jour" type="number" step="0.01" value="0" />
+          <label>Coût unitaire</label>
+          <input id="cout_unitaire" type="number" step="0.01" value="0" />
+          <label>Demande annuelle (D)</label>
+          <input id="demande_annuelle" type="number" value="0" />
+          <label>Coût de commande (S)</label>
+          <input id="cout_commande" type="number" step="0.01" value="0" />
+          <label>Coût de possession (H)</label>
+          <input id="cout_possession" type="number" step="0.01" value="0" />
+          <div class="flex">
+            <button onclick="saveArticle()">Enregistrer</button>
+            <button class="secondary" onclick="resetArticleForm()">Réinitialiser</button>
+            <button class="warn" onclick="loadDemoData()">Données démo</button>
+          </div>
+          <div class="footer-note">BNMP: Net = stock physique + transit − réservé</div>
+        </div>
+
+        <div class="card span-8">
+          <div class="split">
+            <div>
+              <h2>Liste des articles</h2>
+              <p>CRUD simple, calcul BNMP et génération automatique d’un message d’achat.</p>
+            </div>
+            <div>
+              <button class="secondary" onclick="exportData()">Exporter JSON</button>
+              <button class="secondary" onclick="clearAllData()">Vider les données</button>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>SKU</th>
+                <th>Description</th>
+                <th>Stock</th>
+                <th>Transit</th>
+                <th>Réservé</th>
+                <th>Seuil</th>
+                <th>Net</th>
+                <th>Statut</th>
+                <th>Message</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="articlesTable"></tbody>
+          </table>
+        </div>
+
+        <div class="card span-12">
+          <h2>Messages / Demandes d’achat (PO Draft)</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>SKU</th>
+                <th>Qté suggérée</th>
+                <th>Statut</th>
+                <th>Motif</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="messagesTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="processus" class="tab-content">
+      <div class="grid">
+        <div class="card span-6">
+          <h2>AS-IS</h2>
+          <p>Processus actuel, peu structuré, décisions souvent prises à l’instinct.</p>
+          <div class="uml-box">
+            <div class="lane-head">Swimlane</div>
+            <div class="lane-head">Étape 1</div>
+            <div class="lane-head">Étape 2</div>
+            <div class="lane-head">Étape 3</div>
+            <div class="lane-head">Magasinier</div>
+            <div class="uml-cell">Observe une rupture ou un stock bas</div>
+            <div class="uml-cell">Informe verbalement / Excel local</div>
+            <div class="uml-cell">Relance si oubli</div>
+            <div class="lane-head">Système</div>
+            <div class="uml-cell">Aucun calcul automatique BNMP</div>
+            <div class="uml-cell">Pas d’alerte fiable</div>
+            <div class="uml-cell">Pas de traçabilité centralisée</div>
+            <div class="lane-head">Acheteur</div>
+            <div class="uml-cell">Vérifie manuellement</div>
+            <div class="uml-cell">Décide à l’instinct</div>
+            <div class="uml-cell">Passe une commande sans règle claire</div>
+          </div>
+        </div>
+
+        <div class="card span-6">
+          <h2>TO-BE</h2>
+          <p>Processus cible avec BNMP, messages automatiques, règles et workflow PO.</p>
+          <div class="uml-box">
+            <div class="lane-head">Swimlane</div>
+            <div class="lane-head">Étape 1</div>
+            <div class="lane-head">Étape 2</div>
+            <div class="lane-head">Étape 3</div>
+            <div class="lane-head">Magasinier</div>
+            <div class="uml-cell">Met à jour le stock physique / réservé / transit</div>
+            <div class="uml-cell">Consulte le statut de l’article</div>
+            <div class="uml-cell">Suit les PO reçus</div>
+            <div class="lane-head">Système</div>
+            <div class="uml-cell">Calcule Net disponible et KPI</div>
+            <div class="uml-cell">Crée message / PO brouillon selon règles</div>
+            <div class="uml-cell">Journalise tous les événements</div>
+            <div class="lane-head">Acheteur</div>
+            <div class="uml-cell">Valide le brouillon</div>
+            <div class="uml-cell">Choisit le fournisseur actif</div>
+            <div class="uml-cell">Envoie / reçoit / clôt le PO</div>
+          </div>
+        </div>
+
+        <div class="card span-12">
+          <h2>Résumé pédagogique BNMP + UML</h2>
+          <div class="rule">Règle BNMP : Net = stock_physique + transit − réservé</div>
+          <div class="rule">Si Net ≥ seuil_min → statut = OK</div>
+          <div class="rule">Si Net &lt; seuil_min → statut = À commander</div>
+          <div class="rule">Suggestion de quantité = max(0, seuil_min − net + marge)</div>
+          <div class="rule">Évolution séance 5 : si classe A + Net &lt; seuil + fournisseur actif → créer PO brouillon + tâche validation + audit log</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="kpi" class="tab-content">
+      <div class="grid">
+        <div class="card span-12">
+          <h2>Dashboard KPI Stock</h2>
+          <div class="kpi-grid">
+            <div class="kpi"><div class="label">Nombre d’articles</div><div class="value" id="kpiArticles">0</div></div>
+            <div class="kpi"><div class="label">Ruptures (Net &lt; 0)</div><div class="value" id="kpiRupture">0</div></div>
+            <div class="kpi"><div class="label">Taux de service interne</div><div class="value" id="kpiService">0%</div></div>
+            <div class="kpi"><div class="label">Couverture moyenne</div><div class="value" id="kpiCoverage">0 j</div></div>
+          </div>
+        </div>
+        <div class="card span-12">
+          <h2>Détail couverture par article</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>SKU</th>
+                <th>Net</th>
+                <th>Consommation/jour</th>
+                <th>Couverture (jours)</th>
+                <th>Commentaire</th>
+              </tr>
+            </thead>
+            <tbody id="coverageTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="trs" class="tab-content">
+      <div class="grid">
+        <div class="card span-4">
+          <h2>Calcul TRS</h2>
+          <label>Temps planifié (h)</label>
+          <input id="trs_temps_planifie" type="number" step="0.01" value="8" />
+          <label>Arrêts (h)</label>
+          <input id="trs_arrets" type="number" step="0.01" value="1" />
+          <label>Cadence théorique / h</label>
+          <input id="trs_cadence" type="number" step="0.01" value="50" />
+          <label>Quantité totale</label>
+          <input id="trs_qte_totale" type="number" value="300" />
+          <label>Quantité mauvaise</label>
+          <input id="trs_qte_mauvaise" type="number" value="12" />
+          <button onclick="calculateTRS()">Calculer TRS</button>
+        </div>
+        <div class="card span-8">
+          <h2>Résultats TRS</h2>
+          <div><strong>Disponibilité</strong><div class="gauge"><div id="gaugeDispo"></div></div><div id="trsDispoText" class="small"></div></div>
+          <div><strong>Performance</strong><div class="gauge"><div id="gaugePerf"></div></div><div id="trsPerfText" class="small"></div></div>
+          <div><strong>Qualité</strong><div class="gauge"><div id="gaugeQual"></div></div><div id="trsQualText" class="small"></div></div>
+          <div style="margin-top:16px;"><strong>TRS global</strong><div class="gauge"><div id="gaugeTRS"></div></div><div id="trsText" class="small"></div></div>
+          <div class="card" style="margin-top:16px; background:#0b1220;">
+            <h3>Interprétation</h3>
+            <div id="trsInterpretation" class="small">Aucun calcul effectué.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="abc" class="tab-content">
+      <div class="grid">
+        <div class="card span-12">
+          <div class="split">
+            <div>
+              <h2>Segmentation ABC & EOQ</h2>
+              <p>Classement par valeur annuelle = coût unitaire × demande annuelle, puis calcul de l’EOQ.</p>
+            </div>
+            <div>
+              <button onclick="recomputeABC()">Recalculer</button>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>SKU</th>
+                <th>Coût unitaire</th>
+                <th>Demande annuelle</th>
+                <th>Valeur annuelle</th>
+                <th>% cumul</th>
+                <th>Classe</th>
+                <th>S</th>
+                <th>H</th>
+                <th>EOQ</th>
+                <th>Justification</th>
+              </tr>
+            </thead>
+            <tbody id="abcTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="suppliers" class="tab-content">
+      <div class="grid">
+        <div class="card span-4">
+          <h2>Ajouter un fournisseur</h2>
+          <label>ID fournisseur</label>
+          <input id="supplier_id" placeholder="SUP-001" />
+          <label>Nom</label>
+          <input id="supplier_nom" placeholder="Ex. TechParts Québec" />
+          <label>Délai moyen (jours)</label>
+          <input id="supplier_delai" type="number" value="5" />
+          <label>Statut</label>
+          <select id="supplier_statut">
+            <option value="actif">Actif</option>
+            <option value="inactif">Inactif</option>
+          </select>
+          <label>Taux conformité (%)</label>
+          <input id="supplier_conformite" type="number" step="0.01" value="95" />
+          <button onclick="saveSupplier()">Enregistrer</button>
+          <button class="secondary" onclick="resetSupplierForm()">Réinitialiser</button>
+        </div>
+        <div class="card span-8">
+          <h2>Table fournisseurs</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nom</th>
+                <th>Délai moyen</th>
+                <th>Statut</th>
+                <th>Taux conformité</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="suppliersTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="po" class="tab-content">
+      <div class="grid">
+        <div class="card span-12">
+          <h2>Règles métier — Automatisation</h2>
+          <div class="rule">IF (Classe = A) AND (Net &lt; seuil_min) AND (supplier actif) THEN créer PO Brouillon + créer tâche validation + journaliser événement</div>
+          <div class="rule">Garde-fou 1 : un seul PO brouillon / à valider / envoyé par SKU tant qu’il n’est pas clos</div>
+          <div class="rule">Garde-fou 2 : quantité PO &gt; EOQ × 2 → validation manuelle renforcée</div>
+        </div>
+        <div class="card span-4">
+          <h2>Créer / convertir un PO</h2>
+          <label>SKU</label>
+          <select id="po_sku"></select>
+          <label>Quantité</label>
+          <input id="po_qty" type="number" value="0" />
+          <label>Fournisseur</label>
+          <select id="po_supplier"></select>
+          <label>Statut</label>
+          <select id="po_status">
+            <option>Brouillon</option>
+            <option>À valider</option>
+            <option>Envoyé</option>
+            <option>Reçu</option>
+            <option>Clos</option>
+          </select>
+          <label>Utilisateur</label>
+          <input id="po_user" value="Acheteur" />
+          <button onclick="createManualPO()">Créer PO</button>
+          <button class="secondary" onclick="runAutomation()">Lancer automatisation</button>
+        </div>
+        <div class="card span-8">
+          <h2>Workflow des bons de commande</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>PO ID</th>
+                <th>SKU</th>
+                <th>Qté</th>
+                <th>Supplier</th>
+                <th>Statut</th>
+                <th>Contrôle</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="poTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="audit" class="tab-content">
+      <div class="grid">
+        <div class="card span-6">
+          <h2>Journal d’audit</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Utilisateur</th>
+                <th>Détails</th>
+              </tr>
+            </thead>
+            <tbody id="auditTable"></tbody>
+          </table>
+        </div>
+        <div class="card span-6">
+          <h2>UAT — 5 scénarios de test</h2>
+          <button onclick="runUAT()">Exécuter les tests</button>
+          <table>
+            <thead>
+              <tr>
+                <th>Cas</th>
+                <th>Description</th>
+                <th>Résultat</th>
+              </tr>
+            </thead>
+            <tbody id="uatTable"></tbody>
+          </table>
+        </div>
+        <div class="card span-12">
+          <h2>Notes livrables</h2>
+          <ul>
+            <li>Application HTML autonome, interactive et exécutable dans un navigateur.</li>
+            <li>Compatible avec les objectifs BNMP, UML, KPI, TRS, ABC, EOQ, workflow achat, audit et UAT.</li>
+            <li>Les données sont sauvegardées en local via <code>localStorage</code>.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'siag_entrepot_v1';
+    let state = {
+      articles: [],
+      messages: [],
+      suppliers: [],
+      pos: [],
+      audit: []
+    };
+    let editingSku = null;
+    let editingSupplierId = null;
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadState() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        try { state = JSON.parse(raw); } catch (e) { console.error(e); }
+      }
+    }
+
+    function fmtDate(date = new Date()) {
+      return new Date(date).toLocaleString('fr-CA');
+    }
+
+    function num(v) {
+      const n = parseFloat(v);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function computeNet(article) {
+      return num(article.stock_physique) + num(article.transit) - num(article.reserve);
+    }
+
+    function computeStatus(article) {
+      return computeNet(article) >= num(article.seuil_min) ? 'OK' : 'À commander';
+    }
+
+    function computeSuggestedQty(article) {
+      return Math.max(0, Math.ceil(num(article.seuil_min) - computeNet(article) + num(article.marge)));
+    }
+
+    function computeCoverage(article) {
+      const conso = num(article.conso_jour);
+      if (conso <= 0) return null;
+      return computeNet(article) / conso;
+    }
+
+    function computeAnnualValue(article) {
+      return num(article.cout_unitaire) * num(article.demande_annuelle);
+    }
+
+    function computeEOQ(article) {
+      const D = num(article.demande_annuelle);
+      const S = num(article.cout_commande);
+      const H = num(article.cout_possession);
+      if (D <= 0 || S <= 0 || H <= 0) return 0;
+      return Math.sqrt((2 * D * S) / H);
+    }
+
+    function logEvent(type, user, details) {
+      state.audit.unshift({ date: fmtDate(), type, user, details });
+      saveState();
+      renderAudit();
+    }
+
+    function saveArticle() {
+      const article = {
+        sku: document.getElementById('sku').value.trim(),
+        description: document.getElementById('description').value.trim(),
+        stock_physique: num(document.getElementById('stock_physique').value),
+        transit: num(document.getElementById('transit').value),
+        reserve: num(document.getElementById('reserve').value),
+        seuil_min: num(document.getElementById('seuil_min').value),
+        marge: num(document.getElementById('marge').value),
+        conso_jour: num(document.getElementById('conso_jour').value),
+        cout_unitaire: num(document.getElementById('cout_unitaire').value),
+        demande_annuelle: num(document.getElementById('demande_annuelle').value),
+        cout_commande: num(document.getElementById('cout_commande').value),
+        cout_possession: num(document.getElementById('cout_possession').value)
+      };
+      if (!article.sku) return alert('Le SKU est obligatoire.');
+
+      const index = state.articles.findIndex(a => a.sku === editingSku || a.sku === article.sku);
+      if (index >= 0) {
+        state.articles[index] = article;
+        logEvent('ARTICLE_UPDATED', 'Magasinier', `Article ${article.sku} modifié`);
+      } else {
+        state.articles.push(article);
+        logEvent('ARTICLE_CREATED', 'Magasinier', `Article ${article.sku} créé`);
+      }
+      editingSku = null;
+      autoGenerateMessageForArticle(article);
+      recomputeABC();
+      saveState();
+      resetArticleForm();
+      renderAll();
+    }
+
+    function editArticle(sku) {
+      const a = state.articles.find(x => x.sku === sku);
+      if (!a) return;
+      editingSku = sku;
+      for (const [id, val] of Object.entries({
+        sku: a.sku,
+        description: a.description,
+        stock_physique: a.stock_physique,
+        transit: a.transit,
+        reserve: a.reserve,
+        seuil_min: a.seuil_min,
+        marge: a.marge,
+        conso_jour: a.conso_jour,
+        cout_unitaire: a.cout_unitaire,
+        demande_annuelle: a.demande_annuelle,
+        cout_commande: a.cout_commande,
+        cout_possession: a.cout_possession,
+      })) document.getElementById(id).value = val;
+    }
+
+    function deleteArticle(sku) {
+      if (!confirm(`Supprimer ${sku} ?`)) return;
+      state.articles = state.articles.filter(a => a.sku !== sku);
+      state.messages = state.messages.filter(m => m.sku !== sku || m.status === 'Converti');
+      logEvent('ARTICLE_DELETED', 'Magasinier', `Article ${sku} supprimé`);
+      saveState();
+      renderAll();
+    }
+
+    function resetArticleForm() {
+      editingSku = null;
+      ['sku','description','stock_physique','transit','reserve','seuil_min','marge','conso_jour','cout_unitaire','demande_annuelle','cout_commande','cout_possession'].forEach(id => {
+        document.getElementById(id).value = ['description','sku'].includes(id) ? '' : (id === 'marge' ? 5 : 0);
+      });
+    }
+
+    function autoGenerateMessageForArticle(article) {
+      const status = computeStatus(article);
+      const existing = state.messages.find(m => m.sku === article.sku && m.status !== 'Converti' && m.status !== 'Annulé');
+      if (status === 'À commander' && !existing) {
+        const qty = computeSuggestedQty(article);
+        state.messages.unshift({
+          id: crypto.randomUUID(),
+          date: fmtDate(),
+          sku: article.sku,
+          qty,
+          status: 'Brouillon',
+          motif: `Net (${computeNet(article)}) < seuil minimum (${article.seuil_min})`
+        });
+        logEvent('MESSAGE_CREATED', 'Système', `Demande achat générée pour ${article.sku}, quantité ${qty}`);
+      }
+    }
+
+    function convertMessageToPO(messageId) {
+      const msg = state.messages.find(m => m.id === messageId);
+      if (!msg) return;
+      document.querySelector('[data-tab="po"]').click();
+      document.getElementById('po_sku').value = msg.sku;
+      document.getElementById('po_qty').value = msg.qty;
+      if (state.suppliers.length) document.getElementById('po_supplier').value = state.suppliers[0].supplier_id;
+      document.getElementById('po_status').value = 'Brouillon';
+    }
+
+    function markMessageConverted(messageId) {
+      const msg = state.messages.find(m => m.id === messageId);
+      if (!msg) return;
+      msg.status = 'Converti';
+      saveState();
+      renderMessages();
+    }
+
+    function saveSupplier() {
+      const supplier = {
+        supplier_id: document.getElementById('supplier_id').value.trim(),
+        nom: document.getElementById('supplier_nom').value.trim(),
+        delai_moyen_jours: num(document.getElementById('supplier_delai').value),
+        statut: document.getElementById('supplier_statut').value,
+        taux_conformite: num(document.getElementById('supplier_conformite').value)
+      };
+      if (!supplier.supplier_id || !supplier.nom) return alert('ID et nom fournisseur obligatoires.');
+      const idx = state.suppliers.findIndex(s => s.supplier_id === editingSupplierId || s.supplier_id === supplier.supplier_id);
+      if (idx >= 0) {
+        state.suppliers[idx] = supplier;
+        logEvent('SUPPLIER_UPDATED', 'Acheteur', `Fournisseur ${supplier.supplier_id} modifié`);
+      } else {
+        state.suppliers.push(supplier);
+        logEvent('SUPPLIER_CREATED', 'Acheteur', `Fournisseur ${supplier.supplier_id} créé`);
+      }
+      editingSupplierId = null;
+      saveState();
+      resetSupplierForm();
+      renderAll();
+    }
+
+    function editSupplier(id) {
+      const s = state.suppliers.find(x => x.supplier_id === id);
+      if (!s) return;
+      editingSupplierId = id;
+      document.getElementById('supplier_id').value = s.supplier_id;
+      document.getElementById('supplier_nom').value = s.nom;
+      document.getElementById('supplier_delai').value = s.delai_moyen_jours;
+      document.getElementById('supplier_statut').value = s.statut;
+      document.getElementById('supplier_conformite').value = s.taux_conformite;
+    }
+
+    function deleteSupplier(id) {
+      if (!confirm(`Supprimer le fournisseur ${id} ?`)) return;
+      state.suppliers = state.suppliers.filter(s => s.supplier_id !== id);
+      logEvent('SUPPLIER_DELETED', 'Acheteur', `Fournisseur ${id} supprimé`);
+      saveState();
+      renderAll();
+    }
+
+    function resetSupplierForm() {
+      editingSupplierId = null;
+      document.getElementById('supplier_id').value = '';
+      document.getElementById('supplier_nom').value = '';
+      document.getElementById('supplier_delai').value = 5;
+      document.getElementById('supplier_statut').value = 'actif';
+      document.getElementById('supplier_conformite').value = 95;
+    }
+
+    function createManualPO() {
+      const sku = document.getElementById('po_sku').value;
+      const qty = num(document.getElementById('po_qty').value);
+      const supplier_id = document.getElementById('po_supplier').value;
+      const status = document.getElementById('po_status').value;
+      const user = document.getElementById('po_user').value || 'Acheteur';
+      if (!sku || qty <= 0 || !supplier_id) return alert('SKU, quantité et fournisseur sont obligatoires.');
+
+      const article = state.articles.find(a => a.sku === sku);
+      const supplier = state.suppliers.find(s => s.supplier_id === supplier_id);
+      if (!article || !supplier) return alert('Article ou fournisseur introuvable.');
+      const activeStatuses = ['Brouillon', 'À valider', 'Envoyé'];
+      const duplicate = state.pos.find(po => po.sku === sku && activeStatuses.includes(po.status));
+      if (duplicate) return alert('Garde-fou: un PO actif existe déjà pour ce SKU.');
+
+      const eoq = computeEOQ(article);
+      const control = eoq > 0 && qty > eoq * 2 ? 'Validation requise: qty > EOQ × 2' : 'OK';
+
+      const po = {
+        id: `PO-${Date.now()}`,
+        date: fmtDate(),
+        sku, qty, supplier_id, status, control
+      };
+      state.pos.unshift(po);
+      logEvent('PO_CREATED', user, `PO ${po.id} créé pour ${sku}, qty ${qty}, supplier ${supplier_id}`);
+      const msg = state.messages.find(m => m.sku === sku && m.status === 'Brouillon');
+      if (msg) msg.status = 'Converti';
+      saveState();
+      renderAll();
+    }
+
+    function nextPOStatus(id) {
+      const po = state.pos.find(p => p.id === id);
+      if (!po) return;
+      const flow = ['Brouillon', 'À valider', 'Envoyé', 'Reçu', 'Clos'];
+      const index = flow.indexOf(po.status);
+      if (index < flow.length - 1) {
+        po.status = flow[index + 1];
+        logEvent('PO_STATUS_UPDATED', 'Acheteur', `PO ${po.id} → ${po.status}`);
+        saveState();
+        renderPOs();
+      }
+    }
+
+    function deletePO(id) {
+      if (!confirm('Supprimer ce PO ?')) return;
+      state.pos = state.pos.filter(p => p.id !== id);
+      logEvent('PO_DELETED', 'Acheteur', `PO ${id} supprimé`);
+      saveState();
+      renderPOs();
+    }
+
+    function runAutomation() {
+      recomputeABC();
+      const activeSupplier = state.suppliers.find(s => s.statut === 'actif');
+      if (!activeSupplier) return alert('Aucun fournisseur actif disponible.');
+      let created = 0;
+      state.articles.forEach(article => {
+        const net = computeNet(article);
+        const cls = article.abcClass || 'C';
+        const activeStatuses = ['Brouillon', 'À valider', 'Envoyé'];
+        const existingPO = state.pos.find(po => po.sku === article.sku && activeStatuses.includes(po.status));
+        if (cls === 'A' && net < num(article.seuil_min) && !existingPO) {
+          const qty = computeSuggestedQty(article);
+          const eoq = computeEOQ(article);
+          const control = eoq > 0 && qty > eoq * 2 ? 'Validation requise: qty > EOQ × 2' : 'OK';
+          state.pos.unshift({
+            id: `PO-${Date.now()}-${Math.floor(Math.random()*1000)}`,
+            date: fmtDate(),
+            sku: article.sku,
+            qty,
+            supplier_id: activeSupplier.supplier_id,
+            status: 'Brouillon',
+            control
+          });
+          logEvent('PO_CREATED', 'Système', `Automatisation: PO brouillon créé pour ${article.sku}`);
+          logEvent('TASK_CREATED', 'Système', `Tâche validation créée pour ${article.sku}`);
+          created++;
+        }
+      });
+      saveState();
+      renderAll();
+      alert(`${created} PO brouillon(s) créé(s) par automatisation.`);
+    }
+
+    function calculateTRS() {
+      const temps_planifie = num(document.getElementById('trs_temps_planifie').value);
+      const arrets = num(document.getElementById('trs_arrets').value);
+      const cadence = num(document.getElementById('trs_cadence').value);
+      const qteTotale = num(document.getElementById('trs_qte_totale').value);
+      const qteMauvaise = num(document.getElementById('trs_qte_mauvaise').value);
+      const tempsFonctionnement = Math.max(0, temps_planifie - arrets);
+      const qteBonne = Math.max(0, qteTotale - qteMauvaise);
+
+      const dispo = temps_planifie > 0 ? tempsFonctionnement / temps_planifie : 0;
+      const perf = (cadence > 0 && tempsFonctionnement > 0) ? qteTotale / (cadence * tempsFonctionnement) : 0;
+      const qual = qteTotale > 0 ? qteBonne / qteTotale : 0;
+      const trs = dispo * perf * qual;
+
+      setGauge('gaugeDispo', dispo);
+      setGauge('gaugePerf', perf);
+      setGauge('gaugeQual', qual);
+      setGauge('gaugeTRS', trs);
+      document.getElementById('trsDispoText').textContent = `${(dispo*100).toFixed(1)}%`;
+      document.getElementById('trsPerfText').textContent = `${(perf*100).toFixed(1)}%`;
+      document.getElementById('trsQualText').textContent = `${(qual*100).toFixed(1)}%`;
+      document.getElementById('trsText').textContent = `${(trs*100).toFixed(1)}%`;
+
+      const items = [
+        { label: 'Disponibilité', value: dispo },
+        { label: 'Performance', value: perf },
+        { label: 'Qualité', value: qual }
+      ].sort((a,b) => a.value - b.value);
+
+      document.getElementById('trsInterpretation').innerHTML = `
+        Temps de fonctionnement = <strong>${tempsFonctionnement.toFixed(2)} h</strong><br>
+        Quantité bonne = <strong>${qteBonne}</strong><br>
+        Le facteur le plus faible est <strong>${items[0].label}</strong>.<br>
+        Interprétation pédagogique : la principale perte se situe au niveau de <strong>${items[0].label.toLowerCase()}</strong>, puis ${items[1].label.toLowerCase()}.
+      `;
+    }
+
+    function setGauge(id, value) {
+      const pct = Math.max(0, Math.min(100, value * 100));
+      document.getElementById(id).style.width = pct + '%';
+    }
+
+    function recomputeABC() {
+      state.articles.sort((a,b) => computeAnnualValue(b) - computeAnnualValue(a));
+      const total = state.articles.reduce((sum, a) => sum + computeAnnualValue(a), 0);
+      let cumulative = 0;
+      state.articles.forEach(article => {
+        const annualValue = computeAnnualValue(article);
+        cumulative += annualValue;
+        const cumPct = total > 0 ? (cumulative / total) * 100 : 0;
+        article.annualValue = annualValue;
+        article.cumPct = cumPct;
+        article.abcClass = cumPct <= 80 ? 'A' : cumPct <= 95 ? 'B' : 'C';
+        article.eoq = computeEOQ(article);
+      });
+      saveState();
+      renderABC();
+    }
+
+    function renderArticles() {
+      const tbody = document.getElementById('articlesTable');
+      tbody.innerHTML = '';
+      state.articles.forEach(article => {
+        const net = computeNet(article);
+        const status = computeStatus(article);
+        const hasMessage = state.messages.some(m => m.sku === article.sku && m.status !== 'Converti' && m.status !== 'Annulé');
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${article.sku}</td>
+          <td>${article.description || '-'}</td>
+          <td>${article.stock_physique}</td>
+          <td>${article.transit}</td>
+          <td>${article.reserve}</td>
+          <td>${article.seuil_min}</td>
+          <td>${net}</td>
+          <td><span class="pill ${status === 'OK' ? 'ok' : 'warn-pill'}">${status}</span></td>
+          <td>${hasMessage ? '<span class="pill info-pill">Demande créée</span>' : '-'}</td>
+          <td>
+            <button onclick="editArticle('${article.sku.replace(/'/g, "\\'")}')">Modifier</button>
+            <button class="danger" onclick="deleteArticle('${article.sku.replace(/'/g, "\\'")}')">Supprimer</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function renderMessages() {
+      const tbody = document.getElementById('messagesTable');
+      tbody.innerHTML = '';
+      state.messages.forEach(m => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${m.date}</td>
+          <td>${m.sku}</td>
+          <td>${m.qty}</td>
+          <td><span class="pill ${m.status === 'Brouillon' ? 'warn-pill' : 'info-pill'}">${m.status}</span></td>
+          <td>${m.motif}</td>
+          <td>
+            <button onclick="convertMessageToPO('${m.id}')">Préparer PO</button>
+            <button class="success" onclick="markMessageConverted('${m.id}')">Marquer converti</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function renderKPI() {
+      const count = state.articles.length;
+      const rupture = state.articles.filter(a => computeNet(a) < 0).length;
+      const service = count > 0 ? (state.articles.filter(a => computeNet(a) >= num(a.seuil_min)).length / count) * 100 : 0;
+      const coverages = state.articles.map(computeCoverage).filter(v => v !== null && Number.isFinite(v));
+      const coverageAvg = coverages.length ? coverages.reduce((a,b) => a+b, 0)/coverages.length : 0;
+      document.getElementById('kpiArticles').textContent = count;
+      document.getElementById('kpiRupture').textContent = rupture;
+      document.getElementById('kpiService').textContent = `${service.toFixed(1)}%`;
+      document.getElementById('kpiCoverage').textContent = `${coverageAvg.toFixed(1)} j`;
+
+      const tbody = document.getElementById('coverageTable');
+      tbody.innerHTML = '';
+      state.articles.forEach(a => {
+        const cov = computeCoverage(a);
+        let commentaire = 'Consommation non renseignée';
+        if (cov !== null) commentaire = cov < 0 ? 'Rupture immédiate' : cov < 3 ? 'Couverture faible' : 'Couverture acceptable';
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${a.sku}</td>
+          <td>${computeNet(a).toFixed(2)}</td>
+          <td>${num(a.conso_jour).toFixed(2)}</td>
+          <td>${cov === null ? '-' : cov.toFixed(2)}</td>
+          <td>${commentaire}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function renderABC() {
+      const tbody = document.getElementById('abcTable');
+      tbody.innerHTML = '';
+      state.articles.forEach(a => {
+        const row = document.createElement('tr');
+        const justification = a.abcClass === 'A'
+          ? 'Article prioritaire : forte contribution, EOQ recommandé'
+          : a.abcClass === 'B'
+          ? 'Suivi régulier, EOQ possible selon politique'
+          : 'Pilotage simplifié, priorité plus faible';
+        row.innerHTML = `
+          <td>${a.sku}</td>
+          <td>${num(a.cout_unitaire).toFixed(2)}</td>
+          <td>${num(a.demande_annuelle).toFixed(0)}</td>
+          <td>${computeAnnualValue(a).toFixed(2)}</td>
+          <td>${(a.cumPct || 0).toFixed(1)}%</td>
+          <td><span class="pill ${a.abcClass === 'A' ? 'danger-pill' : a.abcClass === 'B' ? 'warn-pill' : 'ok'}">${a.abcClass || 'C'}</span></td>
+          <td>${num(a.cout_commande).toFixed(2)}</td>
+          <td>${num(a.cout_possession).toFixed(2)}</td>
+          <td>${(a.eoq || 0).toFixed(2)}</td>
+          <td>${justification}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function renderSuppliers() {
+      const tbody = document.getElementById('suppliersTable');
+      tbody.innerHTML = '';
+      state.suppliers.forEach(s => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${s.supplier_id}</td>
+          <td>${s.nom}</td>
+          <td>${s.delai_moyen_jours} j</td>
+          <td><span class="pill ${s.statut === 'actif' ? 'ok' : 'danger-pill'}">${s.statut}</span></td>
+          <td>${num(s.taux_conformite).toFixed(1)}%</td>
+          <td>
+            <button onclick="editSupplier('${s.supplier_id.replace(/'/g, "\\'")}')">Modifier</button>
+            <button class="danger" onclick="deleteSupplier('${s.supplier_id.replace(/'/g, "\\'")}')">Supprimer</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+      renderSupplierOptions();
+    }
+
+    function renderSupplierOptions() {
+      const poSupplier = document.getElementById('po_supplier');
+      poSupplier.innerHTML = '<option value="">-- choisir --</option>';
+      state.suppliers.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.supplier_id;
+        opt.textContent = `${s.supplier_id} - ${s.nom}`;
+        poSupplier.appendChild(opt);
+      });
+      const poSku = document.getElementById('po_sku');
+      poSku.innerHTML = '<option value="">-- choisir --</option>';
+      state.articles.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a.sku;
+        opt.textContent = a.sku;
+        poSku.appendChild(opt);
+      });
+    }
+
+    function renderPOs() {
+      const tbody = document.getElementById('poTable');
+      tbody.innerHTML = '';
+      state.pos.forEach(po => {
+        const supplier = state.suppliers.find(s => s.supplier_id === po.supplier_id);
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${po.date}</td>
+          <td>${po.id}</td>
+          <td>${po.sku}</td>
+          <td>${po.qty}</td>
+          <td>${supplier ? supplier.nom : po.supplier_id}</td>
+          <td><span class="pill info-pill">${po.status}</span></td>
+          <td>${po.control}</td>
+          <td>
+            <button onclick="nextPOStatus('${po.id}')">Étape suivante</button>
+            <button class="danger" onclick="deletePO('${po.id}')">Supprimer</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function renderAudit() {
+      const tbody = document.getElementById('auditTable');
+      tbody.innerHTML = '';
+      state.audit.forEach(e => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${e.date}</td><td>${e.type}</td><td>${e.user}</td><td>${e.details}</td>`;
+        tbody.appendChild(row);
+      });
+    }
+
+    function runUAT() {
+      const results = [];
+      const anyArticle = state.articles[0];
+      results.push({
+        cas: 'UAT-01',
+        description: 'Calcul Net disponible exécuté pour au moins un article',
+        ok: !!anyArticle && Number.isFinite(computeNet(anyArticle))
+      });
+      results.push({
+        cas: 'UAT-02',
+        description: 'Message auto généré pour un article sous seuil',
+        ok: state.messages.some(m => state.articles.some(a => a.sku === m.sku && computeNet(a) < num(a.seuil_min)))
+      });
+      results.push({
+        cas: 'UAT-03',
+        description: 'Classement ABC calculé',
+        ok: state.articles.some(a => ['A','B','C'].includes(a.abcClass))
+      });
+      results.push({
+        cas: 'UAT-04',
+        description: 'Présence d’au moins un fournisseur actif',
+        ok: state.suppliers.some(s => s.statut === 'actif')
+      });
+      results.push({
+        cas: 'UAT-05',
+        description: 'Audit log alimenté',
+        ok: state.audit.length > 0
+      });
+      const tbody = document.getElementById('uatTable');
+      tbody.innerHTML = '';
+      results.forEach(r => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${r.cas}</td>
+          <td>${r.description}</td>
+          <td><span class="pill ${r.ok ? 'ok' : 'danger-pill'}">${r.ok ? 'Pass' : 'Fail'}</span></td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function exportData() {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'siag-entrepot-data.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function clearAllData() {
+      if (!confirm('Effacer toutes les données ?')) return;
+      state = { articles: [], messages: [], suppliers: [], pos: [], audit: [] };
+      saveState();
+      renderAll();
+    }
+
+    function loadDemoData() {
+      state.articles = [
+        { sku: 'SKU-1001', description: 'Moteur convoyeur', stock_physique: 10, transit: 5, reserve: 8, seuil_min: 12, marge: 5, conso_jour: 2, cout_unitaire: 120, demande_annuelle: 200, cout_commande: 80, cout_possession: 20 },
+        { sku: 'SKU-1002', description: 'Capteur optique', stock_physique: 1, transit: 0, reserve: 3, seuil_min: 4, marge: 2, conso_jour: 1, cout_unitaire: 45, demande_annuelle: 500, cout_commande: 60, cout_possession: 10 },
+        { sku: 'SKU-1003', description: 'Boîte visserie', stock_physique: 60, transit: 0, reserve: 10, seuil_min: 20, marge: 10, conso_jour: 3, cout_unitaire: 8, demande_annuelle: 1000, cout_commande: 25, cout_possession: 4 },
+        { sku: 'SKU-1004', description: 'Carte automate', stock_physique: 0, transit: 2, reserve: 1, seuil_min: 5, marge: 2, conso_jour: 0.5, cout_unitaire: 300, demande_annuelle: 90, cout_commande: 120, cout_possession: 35 }
+      ];
+      state.suppliers = [
+        { supplier_id: 'SUP-001', nom: 'TechParts Québec', delai_moyen_jours: 4, statut: 'actif', taux_conformite: 98 },
+        { supplier_id: 'SUP-002', nom: 'Nordik Supply', delai_moyen_jours: 7, statut: 'inactif', taux_conformite: 91 },
+        { supplier_id: 'SUP-003', nom: 'IndusLogix', delai_moyen_jours: 5, statut: 'actif', taux_conformite: 96 }
+      ];
+      state.messages = [];
+      state.pos = [];
+      state.audit = [];
+      state.articles.forEach(a => autoGenerateMessageForArticle(a));
+      recomputeABC();
+      logEvent('DEMO_DATA_LOADED', 'Système', 'Jeu de données pédagogique chargé');
+      saveState();
+      renderAll();
+    }
+
+    function renderAll() {
+      renderArticles();
+      renderMessages();
+      renderKPI();
+      renderABC();
+      renderSuppliers();
+      renderPOs();
+      renderAudit();
+      runUAT();
+    }
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    loadState();
+    recomputeABC();
+    renderAll();
+    calculateTRS();
+  </script>
+</body>
+</html>
